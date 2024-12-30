@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clock Control Interface</title>
+    <title>6502 Interface</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -28,22 +28,24 @@
         };
 
         async function setFrequency(event) {
-            event.preventDefault(); // Prevent form submission
+            event.preventDefault();
             const frequencyInput = document.getElementById("frequency");
+            const unitInput = document.getElementById("unit");
             const frequency = frequencyInput.value;
+            const unit = unitInput.value;
 
-            const response = await fetch(`/clock?action=set&frequency=${frequency}`);
+            const response = await fetch(`/clock?action=set&frequency=${frequency}&unit=${unit}`);
             const result = await response.json();
 
             if (result.success) {
-                toastr.success(`Frequency set to ${frequency} Hz`);
+                toastr.success(`Frequency set to ${frequency} ${unit}`);
             } else {
                 toastr.error("Failed to set frequency!");
             }
         }
 
         async function singleStep(event) {
-            event.preventDefault(); // Prevent form submission
+            event.preventDefault();
 
             const response = await fetch(`/clock?action=step`);
             const result = await response.json();
@@ -88,8 +90,6 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             getClockState();
-
-            // Attach event listeners to forms
             document.getElementById("set-frequency-form").addEventListener("submit", setFrequency);
             document.getElementById("single-step-form").addEventListener("submit", singleStep);
         });
@@ -100,14 +100,20 @@
     <div class="container mt-5">
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">
-                <h1 class="h3 mb-0">Clock Control Interface</h1>
+                <h1 class="h3 mb-0">6502 Interface</h1>
             </div>
             <div class="card-body">
                 <form id="set-frequency-form">
                     <div class="mb-3">
-                        <label for="frequency" class="form-label">Set Clock Frequency (Hz):</label>
-                        <input type="number" id="frequency" name="frequency" class="form-control"
-                            placeholder="Enter frequency in Hz" min="1" required>
+                        <label for="frequency" class="form-label">Set Clock Frequency:</label>
+                        <div class="input-group">
+                            <input type="number" id="frequency" name="frequency" class="form-control"
+                                placeholder="Enter frequency" min="1" required>
+                            <select id="unit" name="unit" class="form-select">
+                                <option value="kHz" selected>kHz</option>
+                                <option value="MHz">MHz</option>
+                            </select>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-success">Set Frequency</button>
                 </form>
