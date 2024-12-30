@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clock Control Interface</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script>
+        toastr.options = {
+            "closeButton": true,
+            "debug": false,
+            "newestOnTop": true,
+            "progressBar": true,
+            "positionClass": "toast-bottom-right",
+            "preventDuplicates": false,
+            "showDuration": "4000",
+            "hideDuration": "1000",
+            "timeOut": "5000",
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut"
+        };
+
+        async function setFrequency(event) {
+            event.preventDefault(); // Prevent form submission
+            const frequencyInput = document.getElementById("frequency");
+            const frequency = frequencyInput.value;
+
+            const response = await fetch(`/clock?action=set&frequency=${frequency}`);
+            const result = await response.json();
+
+            if (result.success) {
+                toastr.success(`Frequency set to ${frequency} Hz`);
+            } else {
+                toastr.error("Failed to set frequency!");
+            }
+        }
+
+        async function singleStep(event) {
+            event.preventDefault(); // Prevent form submission
+
+            const response = await fetch(`/clock?action=step`);
+            const result = await response.json();
+
+            if (result.success) {
+                toastr.success("Single step executed!");
+            } else {
+                toastr.error("Failed to execute single step!");
+            }
+        }
+
+        async function toggleClock() {
+            const button = document.getElementById("halt-resume-btn");
+            const action = button.dataset.state === "halted" ? "resume" : "halt";
+
+            const response = await fetch(`/clock?action=${action}`);
+            const result = await response.json();
+
+            if (result.success) {
+                const isHalted = action === "halt";
+                button.dataset.state = isHalted ? "halted" : "running";
+                button.textContent = isHalted ? "Resume Clock" : "Halt Clock";
+                button.classList.toggle("btn-danger", isHalted);
+                button.classList.toggle("btn-success", !isHalted);
+                toastr.success(`Clock ${isHalted ? "halted" : "resumed"} successfully!`);
+            } else {
+                toastr.error("Failed to update clock state!");
+            }
+        }
+
+        async function getClockState() {
+            const response = await fetch(`/clock?action=state`);
+            const result = await response.json();
+
+            const button = document.getElementById("halt-resume-btn");
+            const isHalted = result.state === "halted";
+            button.dataset.state = isHalted ? "halted" : "running";
+            button.textContent = isHalted ? "Resume Clock" : "Halt Clock";
+            button.classList.toggle("btn-danger", isHalted);
+            button.classList.toggle("btn-success", !isHalted);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            getClockState();
+
+            // Attach event listeners to forms
+            document.getElementById("set-frequency-form").addEventListener("submit", setFrequency);
+            document.getElementById("single-step-form").addEventListener("submit", singleStep);
+        });
+    </script>
+</head>
+
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h1 class="h3 mb-0">Clock Control Interface</h1>
+            </div>
+            <div class="card-body">
+                <form id="set-frequency-form">
+                    <div class="mb-3">
+                        <label for="frequency" class="form-label">Set Clock Frequency (Hz):</label>
+                        <input type="number" id="frequency" name="frequency" class="form-control"
+                            placeholder="Enter frequency in Hz" min="1" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Set Frequency</button>
+                </form>
+                <hr>
+                <button id="halt-resume-btn" data-state="running" class="btn btn-danger w-100"
+                    onclick="toggleClock()">Halt Clock</button>
+                <hr>
+                <form id="single-step-form">
+                    <button type="submit" class="btn btn-warning w-100">Single Step</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
